@@ -54,8 +54,6 @@ public final class RuimRecords extends UiccApplicationRecords {
 
     // ***** Event Constants
 
-    private static final int EVENT_RADIO_OFF_OR_NOT_AVAILABLE = 2;
-    private static final int EVENT_GET_IMSI_DONE = 3;
     private static final int EVENT_GET_DEVICE_IDENTITY_DONE = 4;
     private static final int EVENT_GET_ICCID_DONE = 5;
     private static final int EVENT_GET_CDMA_SUBSCRIPTION_DONE = 10;
@@ -80,21 +78,20 @@ public final class RuimRecords extends UiccApplicationRecords {
         // recordsToLoad is set to 0 because no requests are made yet
         recordsToLoad = 0;
 
-        //TODO: This probably is not required anymore - this whole object will be
-        //destroyed once this event is received by UiccManager
-        mCi.registerForOffOrNotAvailable(this, EVENT_RADIO_OFF_OR_NOT_AVAILABLE, null);
         // NOTE the EVENT_SMS_ON_RUIM is not registered
         mCi.setOnIccRefresh(this, EVENT_RUIM_REFRESH, null);
 
         // Start off by setting empty state
-        onRadioOffOrNotAvailable();
+        resetRecords();
 
     }
 
     public void dispose() {
+        Log.d(LOG_TAG, "Disposing RuimRecords " + this);
         //Unregister for all events
         mCi.unregisterForOffOrNotAvailable( this);
         mCi.unSetOnIccRefresh(this);
+        resetRecords();
     }
 
     @Override
@@ -102,8 +99,7 @@ public final class RuimRecords extends UiccApplicationRecords {
         if(DBG) Log.d(LOG_TAG, "RuimRecords finalized");
     }
 
-    @Override
-    protected void onRadioOffOrNotAvailable() {
+    protected void resetRecords() {
         mncLength = UNINITIALIZED;
         iccid = null;
 
@@ -194,10 +190,6 @@ public final class RuimRecords extends UiccApplicationRecords {
         try { switch (msg.what) {
             case EVENT_APP_READY:
                 onRuimReady();
-            break;
-
-            case EVENT_RADIO_OFF_OR_NOT_AVAILABLE:
-                onRadioOffOrNotAvailable();
             break;
 
             case EVENT_GET_DEVICE_IDENTITY_DONE:
@@ -347,6 +339,7 @@ public final class RuimRecords extends UiccApplicationRecords {
                 obtainMessage(EVENT_GET_ICCID_DONE));
         recordsToLoad++;
 
+        Log.d(LOG_TAG, "RuimRecords:fetchRuimRecords " + recordsToLoad + " requested: " + recordsRequested);
         // Further records that can be inserted are Operator/OEM dependent
     }
 
