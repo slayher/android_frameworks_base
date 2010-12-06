@@ -353,7 +353,9 @@ public class MobileDataStateTracker extends NetworkStateTracker {
                  * connectivity service should do this, but it may not if the
                  * other IP version is active.
                  */
-                if (!(mApnType.equals(Phone.APN_TYPE_DEFAULT))) {
+                if (mApnType.equals(Phone.APN_TYPE_DEFAULT)) {
+                    removeDefaultRoute(ipv);
+                } else {
                     removePrivateDnsRoutes(ipv);
                 }
             }
