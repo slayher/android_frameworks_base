@@ -87,16 +87,32 @@ public class MobileDataStateTracker extends NetworkStateTracker {
             mEnabled = false;
         }
 
-        String[] ifNames = SystemProperties.get(
-            "mobiledata.interfaces",
-            "rmnet0,eth0,gprs,ppp0"
-        ).split(",");
+        /*
+         * TODO: This list has to be made dynamic to report only those
+         * interfaces that this instance of mobile data state tracker is
+         * concerned with. Or else addPrivateDnsRoutes etc. gets ambiguous.
+         */
+        mDnsPropNames = new String[] {
+                "net.rmnet0.dns1", "net.rmnet0.dns2",
+                "net.rmnet1.dns1", "net.rmnet1.dns2",
+                "net.rmnet2.dns1", "net.rmnet2.dns2",
+                "net.rmnet3.dns1", "net.rmnet3.dns2",
+                "net.rmnet4.dns1", "net.rmnet4.dns2",
+                "net.rmnet5.dns1", "net.rmnet5.dns2",
+                "net.rmnet6.dns1", "net.rmnet6.dns2",
+                "net.rmnet7.dns1", "net.rmnet7.dns2",
+                "net.rmnet8.dns1", "net.rmnet8.dns2",
+                "net.rmnet9.dns1", "net.rmnet9.dns2",
+                "net.rmnet10.dns1", "net.rmnet10.dns2",
+                "net.eth0.dns1",
+                "net.eth0.dns2",
+                "net.eth0.dns3",
+                "net.eth0.dns4",
+                "net.gprs.dns1",
+                "net.gprs.dns2",
+                "net.ppp0.dns1",
+                "net.ppp0.dns2"};
 
-        mDnsPropNames = new String[2 * ifNames.length];
-        for (int i = 0; i < ifNames.length; ++i) {
-            mDnsPropNames[2*i+0] = "net." + ifNames[i] + ".dns1";
-            mDnsPropNames[2*i+1] = "net." + ifNames[i] + ".dns2";
-        }
     }
 
     /**
