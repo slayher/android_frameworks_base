@@ -1060,6 +1060,18 @@ public final class Settings {
         public static final String STAY_ON_WHILE_PLUGGED_IN = "stay_on_while_plugged_in";
 
         /**
+          * Whether Data call is enabled.
+          */
+        public static final String SOCKET_DATA_CALL_ENABLE = "socket_data_call_enable";
+
+        /**
+          * Default file manager to show files on extrenal storage media
+          * when it is mounted
+          * @hide
+          */
+        public static final String DEFAULT_FILE_MANAGER = "default_file_manager";
+
+        /**
          * What happens when the user presses the end call button if they're not
          * on a call.<br/>
          * <b>Values:</b><br/>
