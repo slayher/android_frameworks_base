@@ -52,8 +52,6 @@ public final class RuimRecords extends UiccApplicationRecords {
     private String mMyMobileNumber;
     private String mMin2Min1;
 
-    private String mPrlVersion;
-
     // ***** Event Constants
 
     private static final int EVENT_RADIO_OFF_OR_NOT_AVAILABLE = 2;
@@ -127,11 +125,6 @@ public final class RuimRecords extends UiccApplicationRecords {
 
     public String getCdmaMin() {
          return mMin2Min1;
-    }
-
-    /** Returns null if RUIM is not yet ready */
-    public String getPrlVersion() {
-        return mPrlVersion;
     }
 
     @Override
@@ -250,8 +243,6 @@ public final class RuimRecords extends UiccApplicationRecords {
 
                 mMyMobileNumber = localTemp[0];
                 mMin2Min1 = localTemp[3];
-                mPrlVersion = localTemp[4];
-
                 Log.d(LOG_TAG, "MDN: " + mMyMobileNumber + " MIN: " + mMin2Min1);
 
             break;
