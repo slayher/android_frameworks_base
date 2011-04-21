@@ -804,6 +804,7 @@ class NetworkManagementService extends INetworkManagementService.Stub {
      */
     public void setWiMaxCoExistence(boolean bool) {
         // stub
+    }
 
     public boolean replaceV4SrcRoute(String iface, String ipAddr, String gatewayAddr, int routeId) {
         try {

@@ -1159,7 +1159,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
                 // layout
                 mScreenLocked.setVisibility(View.INVISIBLE);
-                mSelector.setVisibility(View.VISIBLE);
+                mSelector2.setVisibility(View.VISIBLE);
                 mEmergencyCallButton.setVisibility(View.VISIBLE);
                 break;
             case NetworkSubsetLocked:
@@ -1224,7 +1224,7 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
 
         // layout
         mScreenLocked.setVisibility(View.VISIBLE);
-        mSelector.setVisibility(View.VISIBLE);
+        mSelector2.setVisibility(View.VISIBLE);
         mEmergencyCallButton.setVisibility(View.GONE);
     }
 
