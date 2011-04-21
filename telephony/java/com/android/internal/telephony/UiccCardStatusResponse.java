@@ -53,7 +53,7 @@ public class UiccCardStatusResponse {
         AppStatus[]   applications;
     }
 
-    CardStatus card;
+    CardStatus[] cards;
 
     UiccCardStatusResponse() {
 

@@ -49,7 +49,7 @@ public class UiccManager extends Handler{
     private String mLogTag = "RIL_UiccManager";
     CommandsInterface mCi;
     Context mContext;
-    UiccCard mUiccCard;
+    UiccCard[] mUiccCards;
     private boolean mRadioOn = false;
 
     private RegistrantList mIccChangedRegistrants = new RegistrantList();
@@ -75,6 +75,8 @@ public class UiccManager extends Handler{
 
     private UiccManager(Context c, CommandsInterface ci) {
         Log.e(mLogTag, "Creating");
+
+        mUiccCards = new UiccCard[UiccConstants.RIL_MAX_CARDS];
 
         mContext = c;
         mCi = ci;
@@ -145,20 +147,22 @@ public class UiccManager extends Handler{
 
         UiccCardStatusResponse status = (UiccCardStatusResponse)ar.result;
 
-        //Update already existing card
-        if (mUiccCard != null && status.card != null) {
-            mUiccCard.update(status.card, mContext, mCi);
-        }
+        for (int i = 0; i < UiccConstants.RIL_MAX_CARDS; i++) {
+            //Update already existing cards
+            if (mUiccCards[i] != null && i < status.cards.length) {
+                mUiccCards[i].update(status.cards[i], mContext, mCi);
+            }
 
-        //Dispose of removed card
-        if (mUiccCard != null && status.card == null) {
-            mUiccCard.dispose();
-            mUiccCard = null;
-        }
+            //Dispose of removed cards
+            if (mUiccCards[i] != null && i >= status.cards.length) {
+                mUiccCards[i].dispose();
+                mUiccCards[i] = null;
+            }
 
-        //Create added card
-        if (mUiccCard == null && status.card != null) {
-            mUiccCard = new UiccCard(this, status.card, mContext, mCi);
+            //Create added cards
+            if (mUiccCards[i] == null && i < status.cards.length) {
+                mUiccCards[i] = new UiccCard(this, i, status.cards[i], mContext, mCi);
+            }
         }
 
         Log.d(mLogTag, "Notifying IccChangedRegistrants");
@@ -166,9 +170,12 @@ public class UiccManager extends Handler{
     }
 
     private synchronized void disposeCards() {
-        if (mUiccCard != null) {
-            mUiccCard.dispose();
-            mUiccCard = null;
+        for (int i = mUiccCards.length - 1; i >= 0; i--) {
+            if (mUiccCards[i] != null) {
+                Log.d(mLogTag, "Disposing card " + i);
+                mUiccCards[i].dispose();
+                mUiccCards[i] = null;
+            }
         }
         // CatService is disposed so the instance is no longer valid
         mCatService = null;
@@ -178,29 +185,37 @@ public class UiccManager extends Handler{
         sendMessage(obtainMessage(EVENT_ICC_STATUS_CHANGED, onComplete));
     }
 
-    public synchronized UiccCard getIccCard() {
-        return mUiccCard;
+    public synchronized UiccCard[] getIccCards() {
+        ArrayList<UiccCard> cards = new ArrayList<UiccCard>();
+        for (UiccCard c: mUiccCards) {
+            if (c != null && c.getCardState() == CardState.PRESENT) {
+                cards.add(c);
+            }
+        }
+        return (UiccCard[])cards.toArray();
     }
 
     /* Return First subscription of selected family */
     public synchronized UiccCardApplication getCurrentApplication(AppFamily family) {
-        if (mUiccCard == null || mUiccCard.getCardState() != CardState.PRESENT) {
-            return null;
+        for (UiccCard c: mUiccCards) {
+            if (c == null || c.getCardState() != CardState.PRESENT) continue;
+            int[] subscriptions;
+            if (family == AppFamily.APP_FAM_3GPP) {
+                subscriptions = c.getSubscription3gppAppIndex();
+            } else {
+                subscriptions = c.getSubscription3gpp2AppIndex();
+            }
+            if (subscriptions != null && subscriptions.length > 0) {
+                //return First current subscription
+                UiccCardApplication app = c.getUiccCardApplication(subscriptions[0]);
+                return app;
+            } else {
+                //No subscriptions found
+                return null;
+            }
         }
-        int[] subscriptions;
-        if (family == AppFamily.APP_FAM_3GPP) {
-            subscriptions = mUiccCard.getSubscription3gppAppIndex();
-        } else {
-            subscriptions = mUiccCard.getSubscription3gpp2AppIndex();
-        }
-        if (subscriptions != null && subscriptions.length > 0) {
-            //return First current subscription
-            UiccCardApplication app = mUiccCard.getUiccCardApplication(subscriptions[0]);
-            return app;
-        } else {
-            //No subscriptions found
-            return null;
-        }
+        //No Cards found
+        return null;
     }
 
     //Notifies when any of the cards' STATE changes (or card gets added or removed)
