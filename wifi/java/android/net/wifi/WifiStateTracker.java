@@ -237,6 +237,15 @@ public class WifiStateTracker extends NetworkStateTracker {
     private static final String ACTION_DHCP_RENEW = "android.net.wifi.DHCP_RENEW";
 
 
+    private AlarmManager mAlarmManager;
+    private PendingIntent mDhcpRenewalIntent;
+    private PowerManager.WakeLock mDhcpRenewWakeLock;
+    private static final String WAKELOCK_TAG = "*wifi*";
+
+    private static final int DHCP_RENEW = 0;
+    private static final String ACTION_DHCP_RENEW = "android.net.wifi.DHCP_RENEW";
+
+
     /* Tracks if any network in the configuration is disabled */
     private AtomicBoolean mIsAnyNetworkDisabled = new AtomicBoolean(false);
 
@@ -2568,13 +2577,11 @@ public class WifiStateTracker extends NetworkStateTracker {
                             //Do it a bit earlier than half the lease duration time
                             //to beat the native DHCP client and avoid extra packets
                             //48% for one hour lease time = 29 minutes
-                            //Don't do it if we're on an infinite lease
-                            if (mDhcpInfo.leaseDuration >= 0) {
-                                mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                                        SystemClock.elapsedRealtime() +
-                                        mDhcpInfo.leaseDuration * 480, //in milliseconds
-                                        mDhcpRenewalIntent);
-                            }
+                            mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                                    SystemClock.elapsedRealtime() +
+                                    mDhcpInfo.leaseDuration * 480, //in milliseconds
+                                    mDhcpRenewalIntent);
+
                         } else {
                             event = EVENT_INTERFACE_CONFIGURATION_FAILED;
                             Log.e(TAG, "DHCP request failed: " + NetworkUtils.getDhcpError());
