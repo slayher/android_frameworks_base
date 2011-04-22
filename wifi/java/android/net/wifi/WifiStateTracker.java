@@ -110,7 +110,6 @@ public class WifiStateTracker extends NetworkStateTracker {
     private static final int EVENT_MAYBE_START_SCAN_POST_DISCONNECT  = 15;
     private static final int EVENT_NO_MORE_WIFI_LOCKS                = 16;
 
-
     /**
      * The driver state indication.
      */
@@ -228,6 +227,15 @@ public class WifiStateTracker extends NetworkStateTracker {
     private boolean mUseStaticIp = false;
     private int mReconnectCount;
     private boolean mHasWifiLocks = false;
+
+    private AlarmManager mAlarmManager;
+    private PendingIntent mDhcpRenewalIntent;
+    private PowerManager.WakeLock mDhcpRenewWakeLock;
+    private static final String WAKELOCK_TAG = "*wifi*";
+
+    private static final int DHCP_RENEW = 0;
+    private static final String ACTION_DHCP_RENEW = "android.net.wifi.DHCP_RENEW";
+
 
     private AlarmManager mAlarmManager;
     private PendingIntent mDhcpRenewalIntent;
