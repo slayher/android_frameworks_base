@@ -1432,15 +1432,6 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                     mNetTrackers[netType].addDefaultRoute();
                 }
             } else {
-                // many radios add a default route even when we don't want one.
-                // remove the default interface unless we need it for our active network
-                if (mActiveDefaultNetwork != -1) {
-                    String defaultIface = mNetTrackers[mActiveDefaultNetwork].getInterfaceName();
-                    if (defaultIface != null &&
-                            !defaultIface.equals(mNetTrackers[netType].getInterfaceName())) {
-                        mNetTrackers[netType].removeDefaultRoute();
-                    }
-                }
                 mNetTrackers[netType].addPrivateDnsRoutes();
             }
         } else {
