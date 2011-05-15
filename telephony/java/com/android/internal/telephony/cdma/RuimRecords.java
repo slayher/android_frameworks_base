@@ -16,6 +16,7 @@
 
 package com.android.internal.telephony.cdma;
 
+import android.content.Context;
 import android.os.AsyncResult;
 import android.os.Message;
 import android.os.Registrant;
@@ -101,9 +102,6 @@ public final class RuimRecords extends UiccApplicationRecords {
         iccid = null;
 
         adnCache.reset();
-
-        phone.setSystemProperty(PROPERTY_ICC_OPERATOR_NUMERIC, null);
-        phone.setSystemProperty(PROPERTY_ICC_OPERATOR_ISO_COUNTRY, null);
 
         // recordsRequested is set to false indicating that the SIM
         // read requests made so far are not valid. This is set to
@@ -194,35 +192,7 @@ public final class RuimRecords extends UiccApplicationRecords {
             break;
 
             /* IO events */
-            case EVENT_GET_IMSI_DONE:
-                isRecordLoadResponse = true;
-
-                ar = (AsyncResult)msg.obj;
-                if (ar.exception != null) {
-                    Log.e(LOG_TAG, "Exception querying IMSI, Exception:" + ar.exception);
-                    break;
-                }
-
-                mImsi = (String) ar.result;
-
-                // IMSI (MCC+MNC+MSIN) is at least 6 digits, but not more
-                // than 15 (and usually 15).
-                if (mImsi != null && (mImsi.length() < 6 || mImsi.length() > 15)) {
-                    Log.e(LOG_TAG, "invalid IMSI " + mImsi);
-                    mImsi = null;
-                }
-
-                Log.d(LOG_TAG, "IMSI: " + mImsi.substring(0, 6) + "xxxxxxxxx");
-
-                String operatorNumeric = getRUIMOperatorNumeric();
-                if (operatorNumeric != null) {
-                    if(operatorNumeric.length() <= 6){
-                        MccTable.updateMccMncConfiguration(phone, operatorNumeric);
-                    }
-                }
-            break;
-
-            case EVENT_GET_CDMA_SUBSCRIPTION_DONE:
+             case EVENT_GET_CDMA_SUBSCRIPTION_DONE:
                 ar = (AsyncResult)msg.obj;
                 String localTemp[] = (String[])ar.result;
                 if (ar.exception != null) {
@@ -310,13 +280,6 @@ public final class RuimRecords extends UiccApplicationRecords {
 
         // Further records that can be inserted are Operator/OEM dependent
 
-        String operator = getRUIMOperatorNumeric();
-        SystemProperties.set(PROPERTY_ICC_OPERATOR_NUMERIC, operator);
-
-        if (mImsi != null) {
-            SystemProperties.set(PROPERTY_ICC_OPERATOR_ISO_COUNTRY,
-                    MccTable.countryCodeForMcc(Integer.parseInt(mImsi.substring(0,3))));
-        }
         recordsLoadedRegistrants.notifyRegistrants(
             new AsyncResult(null, null, null));
     }

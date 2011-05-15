@@ -1110,7 +1110,6 @@ public class ConnectivityService extends IConnectivityManager.Stub {
         mNetTrackers[prevNetType].setTeardownRequested(false);
 
         if (prevNetType == ConnectivityManager.TYPE_WIMAX || prevNetType == ConnectivityManager.TYPE_WIFI) {
-            mWimaxConnected = false;
 
             if (mNetTrackers[ConnectivityManager.TYPE_MOBILE] != null && getMobileDataEnabled()) {
                 if (DBG) {
@@ -1118,16 +1117,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                 }
                 mNetTrackers[ConnectivityManager.TYPE_MOBILE].reconnect();
             }
-            if (mWimaxStateTracker != null) {
-                try {
-                    Method wimaxRescan = mWimaxStateTracker.getClass().getMethod("wimaxRescan");
-                    if (wimaxRescan != null) {
-                        wimaxRescan.invoke(mWimaxStateTracker);
-                    }
-                } catch (Exception e) {
-                    Slog.d(TAG, "Unable to perform WiMAX rescan!");
-                }
-            }
+            
         }
 
         mNetTrackers[prevNetType].setTeardownRequested(false);
