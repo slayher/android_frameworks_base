@@ -31,7 +31,7 @@ import android.os.Handler;
 import android.os.ServiceManager;
 import android.os.IBinder;
 import android.os.INetworkManagementService;
-
+import android.os.SystemProperties;
 import com.android.internal.telephony.ITelephony;
 import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.TelephonyIntents;
