@@ -105,10 +105,10 @@ public class WifiStateTracker extends NetworkStateTracker {
      * The driver is started or stopped. The object will be the state: true for
      * started, false for stopped.
      */
-    private static final int EVENT_DRIVER_STATE_CHANGED              = 12;
-    private static final int EVENT_PASSWORD_KEY_MAY_BE_INCORRECT     = 13;
-    private static final int EVENT_MAYBE_START_SCAN_POST_DISCONNECT  = 14;
-    private static final int EVENT_NO_MORE_WIFI_LOCKS                = 15;
+    private static final int EVENT_DRIVER_STATE_CHANGED              = 13;
+    private static final int EVENT_PASSWORD_KEY_MAY_BE_INCORRECT     = 14;
+    private static final int EVENT_MAYBE_START_SCAN_POST_DISCONNECT  = 15;
+    private static final int EVENT_NO_MORE_WIFI_LOCKS                = 16;
 
 
     /**
