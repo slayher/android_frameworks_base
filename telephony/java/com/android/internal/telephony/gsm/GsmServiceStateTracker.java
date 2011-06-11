@@ -625,8 +625,7 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
     }
 
     private void setSignalStrengthDefaultValues() {
-        mSignalStrength = new SignalStrength();
-        mSignalStrength.setGsm(true);
+        mSignalStrength = new SignalStrength(99, -1, -1, -1, -1, -1, -1, 99, -1, -1, true);
     }
 
     /**

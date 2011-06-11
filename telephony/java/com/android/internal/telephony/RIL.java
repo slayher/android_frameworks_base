@@ -3473,7 +3473,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
 
     protected Object
     responseSignalStrength(Parcel p) {
-        int numInts = 12;
+        int numInts = 10;
         int response[];
 
         /* TODO: Add SignalStrength class to match RIL_SignalStrength */

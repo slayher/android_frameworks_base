@@ -39,11 +39,9 @@ public class SignalStrength implements Parcelable {
     private int mLteRssi;   // LTE RSSI - Rxed Signal Strength Indicator value (0-31, 99)
     private int mLteRsrp;   // LTE RSRP - Reference signal received power in dBm - 0-97 TS 36.331
     private int mLteRsrq;   // LTE RSRQ in dB, 0-34  TS 36.331
-    private int mLteSnr;    // TODO: add reference
-    private int mLteCqi;    // TODO: add reference , not used
 
     private boolean mIsGsm; // This value is set by the ServiceStateTracker onSignalStrengthResult
-    private static int INVALID = 0x7FFFFFFF;
+
     /**
      * Create a new SignalStrength from a intent notifier Bundle
      *
@@ -68,9 +66,8 @@ public class SignalStrength implements Parcelable {
      * @hide
      */
     public SignalStrength() {
-        this(99, -1, -1, -1, -1, -1, -1, 99, INVALID, INVALID, INVALID,INVALID,true);
+        this(99, -1, -1, -1, -1, -1, -1, true);
     }
-
 
     /**
      * Constructor
@@ -80,7 +77,7 @@ public class SignalStrength implements Parcelable {
     public SignalStrength(int gsmSignalStrength, int gsmBitErrorRate, int cdmaDbm, int cdmaEcio,
             int evdoDbm, int evdoEcio, int evdoSnr, boolean isGsm) {
         this(gsmSignalStrength, gsmBitErrorRate, cdmaDbm, cdmaEcio, evdoDbm, evdoEcio, evdoSnr, 99,
-                INVALID, INVALID, INVALID, INVALID, isGsm);
+                -1, -1, isGsm);
     }
 
     /**
@@ -90,7 +87,7 @@ public class SignalStrength implements Parcelable {
      */
     public SignalStrength(int gsmSignalStrength, int gsmBitErrorRate, int cdmaDbm, int cdmaEcio,
             int evdoDbm, int evdoEcio, int evdoSnr, int lteRssi, int lteRsrp, int lteRsrq,
-            int lteSnr, int lteCqi, boolean isGsm) {
+            boolean isGsm) {
         mGsmSignalStrength = gsmSignalStrength;
         mGsmBitErrorRate = gsmBitErrorRate;
         mCdmaDbm = cdmaDbm;
@@ -101,8 +98,6 @@ public class SignalStrength implements Parcelable {
         mLteRssi = lteRssi;
         mLteRsrp = lteRsrp;
         mLteRsrq = lteRsrq;
-        mLteSnr = lteSnr;
-        mLteCqi = lteCqi;
         mIsGsm = isGsm;
     }
 
@@ -131,8 +126,6 @@ public class SignalStrength implements Parcelable {
         mLteRssi = s.mLteRssi;
         mLteRsrp = s.mLteRsrp;
         mLteRsrq = s.mLteRsrq;
-        mLteSnr = s.mLteSnr;
-        mLteCqi = s.mLteCqi;
         mIsGsm = s.mIsGsm;
     }
 
@@ -152,8 +145,6 @@ public class SignalStrength implements Parcelable {
         mLteRssi = in.readInt();
         mLteRsrp = in.readInt();
         mLteRsrq = in.readInt();
-        mLteSnr = in.readInt();
-        mLteCqi = in.readInt();
         mIsGsm = (in.readInt() != 0);
     }
 
@@ -171,8 +162,6 @@ public class SignalStrength implements Parcelable {
         out.writeInt(mLteRssi);
         out.writeInt(mLteRsrp);
         out.writeInt(mLteRsrq);
-        out.writeInt(mLteSnr);
-        out.writeInt(mLteCqi);
         out.writeInt(mIsGsm ? 1 : 0);
     }
 
@@ -197,16 +186,6 @@ public class SignalStrength implements Parcelable {
             return new SignalStrength[size];
         }
     };
-
-    /**
-     * @param true - Gsm
-     *        false - Cdma
-     *
-     * @hide
-     */
-    public void setGsm(boolean isGsm) {
-        mIsGsm = isGsm;
-    }
 
     /**
      * Get the GSM Signal Strength, valid values are (0-31, 99) as defined in TS 27.007 8.5
@@ -282,22 +261,6 @@ public class SignalStrength implements Parcelable {
     }
 
     /**
-     * Get the LTE SNR
-     * @hide
-     */
-    public int getLteSnr() {
-        return this.mLteSnr;
-    }
-
-    /**
-     * Get the LTE CQI
-     * @hide
-     */
-    public int getLteCqi() {
-        return this.mLteCqi;
-    }
-
-    /**
      * @return true if this is for GSM
      */
     public boolean isGsm() {
@@ -314,7 +277,7 @@ public class SignalStrength implements Parcelable {
                 + mCdmaDbm + mCdmaEcio
                 + mEvdoDbm + mEvdoEcio + mEvdoSnr
                 + mLteRssi + mLteRsrp + mLteRsrq
-                + mLteSnr + mLteCqi + (mIsGsm ? 1 : 0));
+                + (mIsGsm ? 1 : 0));
     }
 
     /**
@@ -344,8 +307,6 @@ public class SignalStrength implements Parcelable {
                 && mLteRssi == s.mLteRssi
                 && mLteRsrp == s.mLteRsrp
                 && mLteRsrq == s.mLteRsrq
-                && mLteSnr == s.mLteSnr
-                && mLteCqi == s.mLteCqi
                 && mIsGsm == s.mIsGsm);
     }
 
@@ -365,8 +326,6 @@ public class SignalStrength implements Parcelable {
                 + " " + mLteRssi
                 + " " + mLteRsrp
                 + " " + mLteRsrq
-                + " " + mLteSnr
-                + " " + mLteCqi
                 + " " + (mIsGsm ? "gsm" : "cdma"));
     }
 
@@ -399,8 +358,6 @@ public class SignalStrength implements Parcelable {
         mLteRssi = m.getInt("LteRssi");
         mLteRsrp = m.getInt("LteRsrp");
         mLteRsrq = m.getInt("LteRsrq");
-        mLteSnr = m.getInt("LteSnr");
-        mLteCqi = m.getInt("LteCqi");
         mIsGsm = m.getBoolean("isGsm");
     }
 
@@ -421,8 +378,6 @@ public class SignalStrength implements Parcelable {
         m.putInt("LteRssi", mLteRssi);
         m.putInt("LteRsrp", mLteRsrp);
         m.putInt("LteRsrq", mLteRsrq);
-        m.putInt("LteSnr", mLteSnr);
-        m.putInt("LteCqi", mLteCqi);
         m.putBoolean("isGsm", Boolean.valueOf(mIsGsm));
     }
 }
