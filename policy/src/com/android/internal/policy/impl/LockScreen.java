@@ -433,7 +433,16 @@ class LockScreen extends LinearLayout implements KeyguardScreen, KeyguardUpdateM
         if (mSelector2 != null) {
             mSelector2.setHoldAfterTrigger(true, false);
             mSelector2.setLeftHintText(R.string.lockscreen_phone_label);
-            mSelector2.setRightHintText(mCustomAppName);
+            if (mCustomAppActivity != null) {
+                Intent i;
+                try {
+                    i = Intent.parseUri(mCustomAppActivity, 0);
+                    PackageManager pm = context.getPackageManager();
+                    ActivityInfo ai = i.resolveActivityInfo(pm,PackageManager.GET_ACTIVITIES);
+                    mSelector2.setRightHintText(ai.loadLabel(pm).toString());
+                } catch (URISyntaxException e) {
+                }
+            }
         }
 
         mEmergencyCallText = (TextView) findViewById(R.id.emergencyCallText);
