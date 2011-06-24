@@ -208,6 +208,16 @@ interface INetworkManagementService
      */
     int getInterfaceTxThrottle(String iface);
 
+    /**
+     * Start Bluetooth NAP service
+     */
+    void startPan();
+
+    /**
+     * Stop Bluetooth NAP service
+     */
+    void stopPan();
+
    /**
     ** Routing
     **/
@@ -260,4 +270,5 @@ interface INetworkManagementService
     * Deletes the route to the destination host from the main table
     */
    boolean delDstRoute(String ipAddr);
+
 }
