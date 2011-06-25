@@ -2913,6 +2913,8 @@ public class RIL extends BaseCommands implements CommandsInterface {
                     mResendIncallMuteRegistrants.notifyRegistrants(
                                         new AsyncResult (null, ret, null));
                 }
+                break;
+
             case RIL_UNSOL_TETHERED_MODE_STATE_CHANGED:
                 if (RILJ_LOGD) unsljLogvRet(response, ret);
                 if (mTetheredModeStateRegistrants != null) {
@@ -3474,7 +3476,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
         /* TODO: Add SignalStrength class to match RIL_SignalStrength */
         response = new int[numInts];
         for (int i = 0 ; i < numInts ; i++) {
-            response[i] = p.readInt();
+            response[i] = p.readInt(); Log.d(LOG_TAG, "Value at " + i + " is " +response[i]);
         }
 
         return response;
