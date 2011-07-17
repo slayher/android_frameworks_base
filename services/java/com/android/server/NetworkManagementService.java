@@ -826,7 +826,7 @@ class NetworkManagementService extends INetworkManagementService.Stub {
             throw new IllegalStateException("Error communicating to native daemon to stop soft AP",
                     e);
         }
-
+    }
 
     public boolean replaceV4SrcRoute(String iface, String ipAddr, String gatewayAddr, int routeId) {
         try {
