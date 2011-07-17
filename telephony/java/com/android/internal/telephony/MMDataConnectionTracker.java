@@ -824,9 +824,6 @@ public class MMDataConnectionTracker extends DataConnectionTracker {
         }
 
         //ASSERT: Data call setup has failed.
-
-        freeDataConnection((MMDataConnection)c.dc);
-
         //Set data call state as FAILED, state might move
         //to WAITING_FOR_ALARM if we have retries left.
 
