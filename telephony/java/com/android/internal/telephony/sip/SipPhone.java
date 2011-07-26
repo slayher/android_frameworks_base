@@ -372,6 +372,7 @@ public class SipPhone extends SipPhoneBase {
         public Phone getPhone() {
             return SipPhone.this;
         }
+
         @Override
         public List<Connection> getConnections() {
             synchronized (SipPhone.class) {
@@ -422,11 +423,6 @@ public class SipPhone extends SipPhoneBase {
                             + ": " + this + " on phone " + getPhone());
                 }
             }
-        }
-
-        public void
-        hangupAllCalls() throws CallStateException {
-            throw new CallStateException("hangupAllCalls: Unimplemented Action");
         }
 
         void initIncomingCall(SipAudioCall sipAudioCall, boolean makeCallWait) {

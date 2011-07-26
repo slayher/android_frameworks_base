@@ -30,7 +30,7 @@ import java.util.ArrayList;
  */
 public class SmsHeader {
 
-    // TODO(cleanup): this datastructure is generally referred to as
+    // TODO(cleanup): this data structure is generally referred to as
     // the 'user data header' or UDH, and so the class name should
     // change to reflect this...
 
@@ -66,6 +66,8 @@ public class SmsHeader {
     public static final int ELT_ID_HYPERLINK_FORMAT_ELEMENT           = 0x21;
     public static final int ELT_ID_REPLY_ADDRESS_ELEMENT              = 0x22;
     public static final int ELT_ID_ENHANCED_VOICE_MAIL_INFORMATION    = 0x23;
+    public static final int ELT_ID_NATIONAL_LANGUAGE_SINGLE_SHIFT     = 0x24;
+    public static final int ELT_ID_NATIONAL_LANGUAGE_LOCKING_SHIFT    = 0x25;
 
     public static final int PORT_WAP_PUSH = 2948;
     public static final int PORT_WAP_WSP  = 9200;
@@ -83,14 +85,9 @@ public class SmsHeader {
         public boolean isEightBits;
     }
 
-    public static class SpecialSmsMsg {
-        public int msgIndType;
-        public int msgCount;
-    }
-
     /**
      * A header element that is not explicitly parsed, meaning not
-     * PortAddrs or ConcatRef or SpecialSmsMsg.
+     * PortAddrs or ConcatRef.
      */
     public static class MiscElt {
         public int id;
@@ -99,8 +96,13 @@ public class SmsHeader {
 
     public PortAddrs portAddrs;
     public ConcatRef concatRef;
-    public ArrayList<SpecialSmsMsg> specialSmsMsgList = new ArrayList<SpecialSmsMsg>();
     public ArrayList<MiscElt> miscEltList = new ArrayList<MiscElt>();
+
+    /** 7 bit national language locking shift table, or 0 for GSM default 7 bit alphabet. */
+    public int languageTable;
+
+    /** 7 bit national language single shift table, or 0 for GSM default 7 bit extension table. */
+    public int languageShiftTable;
 
     public SmsHeader() {}
 
@@ -163,11 +165,11 @@ public class SmsHeader {
                 portAddrs.areEightBits = false;
                 smsHeader.portAddrs = portAddrs;
                 break;
-            case ELT_ID_SPECIAL_SMS_MESSAGE_INDICATION:
-                SpecialSmsMsg specialSmsMsg = new SpecialSmsMsg();
-                specialSmsMsg.msgIndType = inStream.read();
-                specialSmsMsg.msgCount = inStream.read();
-                smsHeader.specialSmsMsgList.add(specialSmsMsg);
+            case ELT_ID_NATIONAL_LANGUAGE_SINGLE_SHIFT:
+                smsHeader.languageShiftTable = inStream.read();
+                break;
+            case ELT_ID_NATIONAL_LANGUAGE_LOCKING_SHIFT:
+                smsHeader.languageTable = inStream.read();
                 break;
             default:
                 MiscElt miscElt = new MiscElt();
@@ -188,7 +190,6 @@ public class SmsHeader {
     public static byte[] toByteArray(SmsHeader smsHeader) {
         if ((smsHeader.portAddrs == null) &&
             (smsHeader.concatRef == null) &&
-            (smsHeader.specialSmsMsgList.size() == 0) &&
             (smsHeader.miscEltList.size() == 0)) {
             return null;
         }
@@ -225,11 +226,15 @@ public class SmsHeader {
                 outStream.write(portAddrs.origPort & 0x00FF);
             }
         }
-        for (SpecialSmsMsg specialSmsMsg : smsHeader.specialSmsMsgList) {
-            outStream.write(ELT_ID_SPECIAL_SMS_MESSAGE_INDICATION);
-            outStream.write(2);
-            outStream.write(specialSmsMsg.msgIndType & 0xFF);
-            outStream.write(specialSmsMsg.msgCount & 0xFF);
+        if (smsHeader.languageShiftTable != 0) {
+            outStream.write(ELT_ID_NATIONAL_LANGUAGE_SINGLE_SHIFT);
+            outStream.write(1);
+            outStream.write(smsHeader.languageShiftTable);
+        }
+        if (smsHeader.languageTable != 0) {
+            outStream.write(ELT_ID_NATIONAL_LANGUAGE_LOCKING_SHIFT);
+            outStream.write(1);
+            outStream.write(smsHeader.languageTable);
         }
         for (MiscElt miscElt : smsHeader.miscEltList) {
             outStream.write(miscElt.id);
@@ -262,11 +267,11 @@ public class SmsHeader {
             builder.append(", areEightBits=" + portAddrs.areEightBits);
             builder.append(" }");
         }
-        for (SpecialSmsMsg specialSmsMsg : specialSmsMsgList) {
-            builder.append(", SpecialSmsMsg ");
-            builder.append("{ msgIndType=" + specialSmsMsg.msgIndType);
-            builder.append(", msgCount=" + specialSmsMsg.msgCount);
-            builder.append(" }");
+        if (languageShiftTable != 0) {
+            builder.append(", languageShiftTable=" + languageShiftTable);
+        }
+        if (languageTable != 0) {
+            builder.append(", languageTable=" + languageTable);
         }
         for (MiscElt miscElt : miscEltList) {
             builder.append(", MiscElt ");

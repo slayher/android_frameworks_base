@@ -104,9 +104,6 @@ public class SmsMessage {
     }
 
     /**
-     * TODO: fusion - remove this constructor? Not enough info to decide on encoding type here.
-     * this function is hidden
-     *
      * Constructor
      *
      * @hide
@@ -119,43 +116,14 @@ public class SmsMessage {
         mWrappedSmsMessage = smb;
     }
 
-    /** TODO fusion - how can this be removed/deprecated?
-     * This is called for MT SMS, and not enough information to determine
-     * encoding type as MT SMS is no longer tied to Voice Tech alone.
-     *
+    /**
      * Create an SmsMessage from a raw PDU.
      */
     public static SmsMessage createFromPdu(byte[] pdu) {
         SmsMessageBase wrappedMessage;
         int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        // cdma vs gsm encoding info was not given, guess from active voice phone type
         if (PHONE_TYPE_CDMA == activePhone) {
-            wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.createFromPdu(pdu);
-        } else {
-            wrappedMessage = com.android.internal.telephony.gsm.SmsMessage.createFromPdu(pdu);
-        }
-
-        if (null != wrappedMessage) {
-            return new SmsMessage(wrappedMessage);
-        }
-        // decoding pdu failed based on activePhone type, must be other encoding
-        if (PHONE_TYPE_CDMA == activePhone) {
-            wrappedMessage = com.android.internal.telephony.gsm.SmsMessage.createFromPdu(pdu);
-        } else {
-            wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.createFromPdu(pdu);
-        }
-        return new SmsMessage(wrappedMessage);
-    }
-
-    /**
-     * Create an SmsMessage from a raw PDU.
-     * @hide
-     */
-    public static SmsMessage createFromPdu(byte[] pdu, int encoding) {
-        SmsMessageBase wrappedMessage;
-
-        if (PHONE_TYPE_CDMA == encoding) {
             wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.createFromPdu(pdu);
         } else {
             wrappedMessage = com.android.internal.telephony.gsm.SmsMessage.createFromPdu(pdu);
@@ -175,21 +143,23 @@ public class SmsMessage {
      */
     public static SmsMessage newFromCMT(String[] lines){
         SmsMessageBase wrappedMessage;
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        // this functioned is called for RIL_UNSOL_RESPONSE_NEW_SMS (gsm)
-        wrappedMessage = com.android.internal.telephony.gsm.SmsMessage.newFromCMT(lines);
+        if (PHONE_TYPE_CDMA == activePhone) {
+            wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.newFromCMT(lines);
+        } else {
+            wrappedMessage = com.android.internal.telephony.gsm.SmsMessage.newFromCMT(lines);
+        }
 
         return new SmsMessage(wrappedMessage);
     }
 
-    /** TODO: fusion - remove? Not enough info to decide on encoding type here.
-     * this function is hidden anyway... and is not public
-     * @hide
-     */
+    /** @hide */
     protected static SmsMessage newFromCMTI(String line) {
         SmsMessageBase wrappedMessage;
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        if (isCdmaVoice()) {
+        if (PHONE_TYPE_CDMA == activePhone) {
             wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.newFromCMTI(line);
         } else {
             wrappedMessage = com.android.internal.telephony.gsm.SmsMessage.newFromCMTI(line);
@@ -198,14 +168,12 @@ public class SmsMessage {
         return new SmsMessage(wrappedMessage);
     }
 
-    /** TODO: fusion - remove? Not enough info to decide on encoding type here.
-     * this function is hidden anyway...
-     * @hide
-     */
+    /** @hide */
     public static SmsMessage newFromCDS(String line) {
         SmsMessageBase wrappedMessage;
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        if (isCdmaVoice()) {
+        if (PHONE_TYPE_CDMA == activePhone) {
             wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.newFromCDS(line);
         } else {
             wrappedMessage = com.android.internal.telephony.gsm.SmsMessage.newFromCDS(line);
@@ -217,9 +185,13 @@ public class SmsMessage {
     /** @hide */
     public static SmsMessage newFromParcel(Parcel p) {
         SmsMessageBase wrappedMessage;
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        // this function is called for RIL_UNSOL_RESPONSE_CDMA_NEW_SMS
-        wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.newFromParcel(p);
+        if (PHONE_TYPE_CDMA == activePhone) {
+            wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.newFromParcel(p);
+        } else {
+            wrappedMessage = com.android.internal.telephony.gsm.SmsMessage.newFromParcel(p);
+        }
 
         return new SmsMessage(wrappedMessage);
     }
@@ -236,11 +208,9 @@ public class SmsMessage {
      */
     public static SmsMessage createFromEfRecord(int index, byte[] data) {
         SmsMessageBase wrappedMessage;
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        // UiccCardApplication has the handle to IccFileHandler which
-        // is used to obtain messages from Icc, and active application
-        // is tied to voice type, so use voice tech here to decide encoding type.
-        if (isCdmaVoice()) {
+        if (PHONE_TYPE_CDMA == activePhone) {
             wrappedMessage = com.android.internal.telephony.cdma.SmsMessage.createFromEfRecord(
                     index, data);
         } else {
@@ -251,12 +221,14 @@ public class SmsMessage {
         return wrappedMessage != null ? new SmsMessage(wrappedMessage) : null;
     }
 
-    /** TODO: fusion -  Not used remove? SmsMessage in gsm/cdma is public.
+    /**
      * Get the TP-Layer-Length for the given SMS-SUBMIT PDU Basically, the
      * length in bytes (not hex chars) less the SMSC header
      */
     public static int getTPLayerLengthForPDU(String pdu) {
-        if (isCdmaVoice()) {
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
+
+        if (PHONE_TYPE_CDMA == activePhone) {
             return com.android.internal.telephony.cdma.SmsMessage.getTPLayerLengthForPDU(pdu);
         } else {
             return com.android.internal.telephony.gsm.SmsMessage.getTPLayerLengthForPDU(pdu);
@@ -290,8 +262,8 @@ public class SmsMessage {
      *         class).
      */
     public static int[] calculateLength(CharSequence msgBody, boolean use7bitOnly) {
-        // this function is called from ComposeMessageActivity, MO SMS
-        TextEncodingDetails ted = (useCdmaEncodingForMoSms()) ?
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
+        TextEncodingDetails ted = (PHONE_TYPE_CDMA == activePhone) ?
             com.android.internal.telephony.cdma.SmsMessage.calculateLength(msgBody, use7bitOnly) :
             com.android.internal.telephony.gsm.SmsMessage.calculateLength(msgBody, use7bitOnly);
         int ret[] = new int[4];
@@ -313,8 +285,8 @@ public class SmsMessage {
      * @hide
      */
     public static ArrayList<String> fragmentText(String text) {
-        // This function is for MO SMS
-        TextEncodingDetails ted = (useCdmaEncodingForMoSms()) ?
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
+        TextEncodingDetails ted = (PHONE_TYPE_CDMA == activePhone) ?
             com.android.internal.telephony.cdma.SmsMessage.calculateLength(text, false) :
             com.android.internal.telephony.gsm.SmsMessage.calculateLength(text, false);
 
@@ -337,12 +309,13 @@ public class SmsMessage {
         while (pos < textLen) {
             int nextPos = 0;  // Counts code units.
             if (ted.codeUnitSize == ENCODING_7BIT) {
-                if (useCdmaEncodingForMoSms() && ted.msgCount == 1) {
+                if (activePhone == PHONE_TYPE_CDMA && ted.msgCount == 1) {
                     // For a singleton CDMA message, the encoding must be ASCII...
                     nextPos = pos + Math.min(limit, textLen - pos);
                 } else {
                     // For multi-segment messages, CDMA 7bit equals GSM 7bit encoding (EMS mode).
-                    nextPos = GsmAlphabet.findGsmSeptetLimitIndex(text, pos, limit);
+                    nextPos = GsmAlphabet.findGsmSeptetLimitIndex(text, pos, limit,
+                            ted.languageTable, ted.languageShiftTable);
                 }
             } else {  // Assume unicode.
                 nextPos = pos + Math.min(limit / 2, textLen - pos);
@@ -397,8 +370,9 @@ public class SmsMessage {
      * otherwise useful apps.
      */
 
-    /** TODO: fusion -  Not used remove? SmsMessage in gsm/cdma is public.
-     * Get an SMS-SUBMIT PDU for a destination address and a message
+    /**
+     * Get an SMS-SUBMIT PDU for a destination address and a message.
+     * This method will not attempt to use any GSM national language 7 bit encodings.
      *
      * @param scAddress Service Centre address.  Null means use default.
      * @return a <code>SubmitPdu</code> containing the encoded SC
@@ -410,8 +384,9 @@ public class SmsMessage {
             String destinationAddress, String message,
             boolean statusReportRequested, byte[] header) {
         SubmitPduBase spb;
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        if (useCdmaEncodingForMoSms()) {
+        if (PHONE_TYPE_CDMA == activePhone) {
             spb = com.android.internal.telephony.cdma.SmsMessage.getSubmitPdu(scAddress,
                     destinationAddress, message, statusReportRequested,
                     SmsHeader.fromByteArray(header));
@@ -423,8 +398,9 @@ public class SmsMessage {
         return new SubmitPdu(spb);
     }
 
-    /** TODO: fusion -  Not used remove? SmsMessage in gsm/cdma is public.
-     * Get an SMS-SUBMIT PDU for a destination address and a message
+    /**
+     * Get an SMS-SUBMIT PDU for a destination address and a message.
+     * This method will not attempt to use any GSM national language 7 bit encodings.
      *
      * @param scAddress Service Centre address.  Null means use default.
      * @return a <code>SubmitPdu</code> containing the encoded SC
@@ -434,8 +410,9 @@ public class SmsMessage {
     public static SubmitPdu getSubmitPdu(String scAddress,
             String destinationAddress, String message, boolean statusReportRequested) {
         SubmitPduBase spb;
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        if (useCdmaEncodingForMoSms()) {
+        if (PHONE_TYPE_CDMA == activePhone) {
             spb = com.android.internal.telephony.cdma.SmsMessage.getSubmitPdu(scAddress,
                     destinationAddress, message, statusReportRequested, null);
         } else {
@@ -446,8 +423,9 @@ public class SmsMessage {
         return new SubmitPdu(spb);
     }
 
-    /** TODO: fusion -  Not used remove? SmsMessage in gsm/cdma is public.
-     * Get an SMS-SUBMIT PDU for a data message to a destination address &amp; port
+    /**
+     * Get an SMS-SUBMIT PDU for a data message to a destination address &amp; port.
+     * This method will not attempt to use any GSM national language 7 bit encodings.
      *
      * @param scAddress Service Centre address. null == use default
      * @param destinationAddress the address of the destination for the message
@@ -462,8 +440,9 @@ public class SmsMessage {
             String destinationAddress, short destinationPort, byte[] data,
             boolean statusReportRequested) {
         SubmitPduBase spb;
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
 
-        if (useCdmaEncodingForMoSms()) {
+        if (PHONE_TYPE_CDMA == activePhone) {
             spb = com.android.internal.telephony.cdma.SmsMessage.getSubmitPdu(scAddress,
                     destinationAddress, destinationPort, data, statusReportRequested);
         } else {
@@ -723,32 +702,18 @@ public class SmsMessage {
         return mWrappedSmsMessage.isReplyPathPresent();
     }
 
-    /**TODO: fusion - Not enough info to decide on encoding type here.
-     * This method returns the reference to a specific
+    /** This method returns the reference to a specific
      *  SmsMessage object, which is used for accessing its static methods.
      * @return Specific SmsMessage.
      *
      * @hide
      */
     private static final SmsMessageBase getSmsFacility(){
-        if (isCdmaVoice()) {
+        int activePhone = TelephonyManager.getDefault().getPhoneType();
+        if (PHONE_TYPE_CDMA == activePhone) {
             return new com.android.internal.telephony.cdma.SmsMessage();
         } else {
             return new com.android.internal.telephony.gsm.SmsMessage();
         }
-    }
-
-    private static boolean useCdmaEncodingForMoSms() {
-        if (com.android.internal.telephony.SMSDispatcher.isIms()) {
-            // IMS is registered
-            return com.android.internal.telephony.SMSDispatcher.isImsSmsEncodingCdma();
-        } else {
-            return isCdmaVoice();
-        }
-    }
-
-    private static boolean isCdmaVoice() {
-        int activePhone = TelephonyManager.getDefault().getPhoneType();
-        return (PHONE_TYPE_CDMA == activePhone);
     }
 }

@@ -19,7 +19,6 @@ package com.android.internal.telephony.cdma;
 import android.os.*;
 import android.util.Log;
 
-import com.android.internal.telephony.CommandsInterface;
 import com.android.internal.telephony.IccConstants;
 import com.android.internal.telephony.IccException;
 import com.android.internal.telephony.IccFileHandler;
@@ -27,7 +26,6 @@ import com.android.internal.telephony.IccFileTypeMismatch;
 import com.android.internal.telephony.IccIoResult;
 import com.android.internal.telephony.IccUtils;
 import com.android.internal.telephony.PhoneProxy;
-import com.android.internal.telephony.UiccCardApplication;
 
 import java.util.ArrayList;
 
@@ -40,8 +38,8 @@ public final class RuimFileHandler extends IccFileHandler {
     //***** Instance Variables
 
     //***** Constructor
-    public RuimFileHandler(UiccCardApplication app,int slotId, String aid, CommandsInterface ci) {
-        super(app, slotId, aid, ci);
+    RuimFileHandler(CDMAPhone phone) {
+        super(phone);
     }
 
     public void dispose() {
@@ -59,7 +57,7 @@ public final class RuimFileHandler extends IccFileHandler {
         Message response = obtainMessage(EVENT_READ_ICON_DONE, fileid, 0,
                 onLoaded);
 
-        mCi.iccIO(mSlotId, mAid, COMMAND_GET_RESPONSE, fileid, "img", 0, 0,
+        phone.mCM.iccIO(COMMAND_GET_RESPONSE, fileid, "img", 0, 0,
                 GET_RESPONSE_EF_IMG_SIZE_BYTES, null, null, response);
     }
 
@@ -75,9 +73,6 @@ public final class RuimFileHandler extends IccFileHandler {
         case EF_CST:
         case EF_RUIM_SPN:
             return MF_SIM + DF_CDMA;
-        case EF_FDN:
-        case EF_MSISDN:
-            return MF_SIM + DF_TELECOM;
         }
         return getCommonIccEFPath(efid);
     }

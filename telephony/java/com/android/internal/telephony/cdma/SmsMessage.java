@@ -18,6 +18,7 @@ package com.android.internal.telephony.cdma;
 
 import android.os.Parcel;
 import android.os.SystemProperties;
+import android.telephony.PhoneNumberUtils;
 import android.text.format.Time;
 import android.util.Config;
 import android.util.Log;
@@ -34,7 +35,6 @@ import com.android.internal.telephony.cdma.sms.SmsEnvelope;
 import com.android.internal.telephony.cdma.sms.UserData;
 import com.android.internal.util.BitwiseInputStream;
 import com.android.internal.util.HexDump;
-import android.provider.Telephony.Sms;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -95,12 +95,6 @@ public class SmsMessage extends SmsMessageBase {
     /** Specifies if a return of an acknowledgment is requested for send SMS */
     private static final int RETURN_NO_ACK  = 0;
     private static final int RETURN_ACK     = 1;
-
-    /* Indicates the Cdma Error Class values
-       Message Status (See 3GPP2 C.S0015-B, v2, 4.5.1) */
-    private static final int CDMA_SMS_STATUS_NO_ERROR  = 0;  // No Error
-    private static final int CDMA_SMS_STATUS_PENDING   = 2;  // Temporary Condition
-    private static final int CDMA_SMS_STATUS_FAILED    = 3;  // Permanent Condition
 
     private SmsEnvelope mEnvelope;
     private BearerData mBearerData;
@@ -452,7 +446,7 @@ public class SmsMessage extends SmsMessageBase {
      * shifted to the bits 31-16.
      */
     public int getStatus() {
-         return status;
+        return (status << 16);
     }
 
     /** Return true iff the bearer data message type is DELIVERY_ACK. */
@@ -488,9 +482,8 @@ public class SmsMessage extends SmsMessageBase {
      *  {@link com.android.internal.telephony.cdma.sms.SmsEnvelope#TELESERVICE_WEMT},
      *  {@link com.android.internal.telephony.cdma.sms.SmsEnvelope#TELESERVICE_VMN},
      *  {@link com.android.internal.telephony.cdma.sms.SmsEnvelope#TELESERVICE_WAP}
-     * @hide
     */
-    public int getTeleService() {
+    /* package */ int getTeleService() {
         return mEnvelope.teleService;
     }
 
@@ -500,9 +493,8 @@ public class SmsMessage extends SmsMessageBase {
      *  {@link com.android.internal.telephony.cdma.sms.SmsEnvelope#MESSAGE_TYPE_POINT_TO_POINT},
      *  {@link com.android.internal.telephony.cdma.sms.SmsEnvelope#MESSAGE_TYPE_BROADCAST},
      *  {@link com.android.internal.telephony.cdma.sms.SmsEnvelope#MESSAGE_TYPE_ACKNOWLEDGE},
-     * @hide
     */
-    public int getMessageType() {
+    /* package */ int getMessageType() {
         return mEnvelope.messageType;
     }
 
@@ -698,9 +690,8 @@ public class SmsMessage extends SmsMessageBase {
 
     /**
      * Parses a SMS message from its BearerData stream. (mobile-terminated only)
-     * @hide
      */
-    public void parseSms() {
+    protected void parseSms() {
         // Message Waiting Info Record defined in 3GPP2 C.S-0005, 3.7.5.6
         // It contains only an 8-bit number with the number of messages waiting
         if (mEnvelope.teleService == SmsEnvelope.TELESERVICE_MWI) {
@@ -754,21 +745,8 @@ public class SmsMessage extends SmsMessageBase {
                         " userData).");
                 status = 0;
             } else {
-                // Message Status (See 3GPP2 C.S0015-B, v2, 4.5.1)
-                switch(mBearerData.errorClass) {
-                     case CDMA_SMS_STATUS_NO_ERROR:
-                          status = Sms.STATUS_COMPLETE;
-                          break;
-                     case CDMA_SMS_STATUS_PENDING:
-                          status = Sms.STATUS_PENDING;
-                          break;
-                     case CDMA_SMS_STATUS_FAILED:
-                          status = Sms.STATUS_FAILED;
-                          break;
-                     default:
-                          status = Sms.STATUS_NONE;
-                          break;
-                }
+                status = mBearerData.errorClass << 8;
+                status |= mBearerData.messageStatus;
             }
         } else if (mBearerData.messageType != BearerData.MESSAGE_TYPE_DELIVER) {
             throw new RuntimeException("Unsupported message type: " + mBearerData.messageType);
@@ -834,7 +812,12 @@ public class SmsMessage extends SmsMessageBase {
          * mechanism, and avoid null pointer exceptions.
          */
 
-        CdmaSmsAddress destAddr = CdmaSmsAddress.parse(destAddrStr);
+        /**
+         * North America Plus Code :
+         * Convert + code to 011 and dial out for international SMS
+         */
+        CdmaSmsAddress destAddr = CdmaSmsAddress.parse(
+                PhoneNumberUtils.cdmaCheckAndProcessPlusCode(destAddrStr));
         if (destAddr == null) return null;
 
         BearerData bearerData = new BearerData();
@@ -985,7 +968,7 @@ public class SmsMessage extends SmsMessageBase {
     /** This function  shall be called to get the number of voicemails.
      * @hide
      */
-    public int getNumOfVoicemails() {
+    /*package*/ int getNumOfVoicemails() {
         return mBearerData.numberOfMessages;
     }
 
@@ -996,7 +979,7 @@ public class SmsMessage extends SmsMessageBase {
      * @return byte array uniquely identifying the message.
      * @hide
      */
-    public byte[] getIncomingSmsFingerprint() {
+    /* package */ byte[] getIncomingSmsFingerprint() {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         output.write(mEnvelope.teleService);
