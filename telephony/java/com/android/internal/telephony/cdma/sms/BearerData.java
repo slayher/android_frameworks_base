@@ -20,9 +20,8 @@ import static android.telephony.SmsMessage.ENCODING_16BIT;
 import static android.telephony.SmsMessage.MAX_USER_DATA_BYTES;
 import static android.telephony.SmsMessage.MAX_USER_DATA_BYTES_WITH_HEADER;
 
-import android.os.SystemProperties;
-
 import android.util.Log;
+import android.util.SparseIntArray;
 
 import android.telephony.SmsMessage;
 
@@ -31,8 +30,10 @@ import android.text.format.Time;
 import com.android.internal.telephony.IccUtils;
 import com.android.internal.telephony.GsmAlphabet;
 import com.android.internal.telephony.SmsHeader;
+import com.android.internal.telephony.cdma.sms.UserData;
 import com.android.internal.telephony.SmsMessageBase.TextEncodingDetails;
 
+import com.android.internal.util.HexDump;
 import com.android.internal.util.BitwiseInputStream;
 import com.android.internal.util.BitwiseOutputStream;
 
@@ -503,7 +504,7 @@ public final class BearerData {
              * stringToGsm7BitPacked, and potentially directly support
              * access to the main bitwise stream from encode/decode.
              */
-            byte[] fullData = GsmAlphabet.stringToGsm7BitPacked(msg, septetOffset, !force, 0, 0);
+            byte[] fullData = GsmAlphabet.stringToGsm7BitPacked(msg, septetOffset, !force);
             Gsm7bitCodingResult result = new Gsm7bitCodingResult();
             result.data = new byte[fullData.length - 1];
             System.arraycopy(fullData, 1, result.data, 0, fullData.length - 1);
@@ -878,19 +879,10 @@ public final class BearerData {
             paramBits -= EXPECTED_PARAM_SIZE;
             decodeSuccess = true;
             bData.messageType = inStream.read(4);
-            // Samsung Fascinate parses messageId differently than other devices
-            // fix it here so that incoming sms works correctly
-            if ("fascinatemtd".equals(SystemProperties.get("ro.product.device"))) {
-                inStream.skip(4);
-                bData.messageId = inStream.read(8) << 8;
-                bData.messageId |= inStream.read(8);
-                bData.hasUserDataHeader = (inStream.read(8) == 1);
-            } else {
-                bData.messageId = inStream.read(8) << 8;
-                bData.messageId |= inStream.read(8);
-                bData.hasUserDataHeader = (inStream.read(1) == 1);
-                inStream.skip(3);
-            }
+            bData.messageId = inStream.read(8) << 8;
+            bData.messageId |= inStream.read(8);
+            bData.hasUserDataHeader = (inStream.read(1) == 1);
+            inStream.skip(3);
         }
         if ((! decodeSuccess) || (paramBits > 0)) {
             Log.d(LOG_TAG, "MESSAGE_IDENTIFIER decode " +
@@ -935,7 +927,7 @@ public final class BearerData {
     private static String decodeUtf16(byte[] data, int offset, int numFields)
         throws CodingException
     {
-        // Start reading from the next 16-bit aligned boundary after offset.
+        // Start reading from the next 16-bit aligned boundry after offset.
         int padding = offset % 2;
         numFields -= (offset + padding) / 2;
         try {
@@ -981,13 +973,12 @@ public final class BearerData {
     private static String decode7bitGsm(byte[] data, int offset, int numFields)
         throws CodingException
     {
-        // Start reading from the next 7-bit aligned boundary after offset.
+        // Start reading from the next 7-bit aligned boundry after offset.
         int offsetBits = offset * 8;
         int offsetSeptets = (offsetBits + 6) / 7;
         numFields -= offsetSeptets;
         int paddingBits = (offsetSeptets * 7) - offsetBits;
-        String result = GsmAlphabet.gsm7BitPackedToString(data, offset, numFields, paddingBits,
-                0, 0);
+        String result = GsmAlphabet.gsm7BitPackedToString(data, offset, numFields, paddingBits);
         if (result == null) {
             throw new CodingException("7bit GSM decoding failed");
         }
