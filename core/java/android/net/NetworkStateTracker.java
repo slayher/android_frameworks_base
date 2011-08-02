@@ -51,6 +51,7 @@ public abstract class NetworkStateTracker extends Handler {
     protected NetworkInfo mNetworkInfo;
     protected Context mContext;
     protected Handler mTarget;
+    protected String interfaceName;
     protected String[] mDnsPropNames;
     private boolean mTeardownRequested;
 
@@ -518,4 +519,7 @@ public abstract class NetworkStateTracker extends Handler {
     public void interpretScanResultsAvailable() {
     }
 
+    public String getInterfaceName() {
+	return interfaceName;
+    }
 }
