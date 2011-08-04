@@ -991,7 +991,9 @@ public class WifiStateTracker extends NetworkStateTracker {
                     resetConnections(true);
                 }
                 // When supplicant dies, kill the DHCP thread
-                mDhcpTarget.getLooper().quit();
+                if (mDhcpTarget != null) {
+                    mDhcpTarget.getLooper().quit();
+                }
 
                 mContext.removeStickyBroadcast(new Intent(WifiManager.NETWORK_STATE_CHANGED_ACTION));
                 mContext.removeStickyBroadcast(new Intent(WifiManager.NO_MORE_WIFI_LOCKS));
@@ -1474,8 +1476,10 @@ public class WifiStateTracker extends NetworkStateTracker {
         NetworkUtils.resetConnections(mInterfaceName);
 
         // Stop DHCP
-        mDhcpTarget.setCancelCallback(true);
-        mDhcpTarget.removeMessages(EVENT_DHCP_START);
+        if (mDhcpTarget != null) {
+            mDhcpTarget.setCancelCallback(true);
+            mDhcpTarget.removeMessages(EVENT_DHCP_START);
+        }
 
         if (!NetworkUtils.stopDhcp(mInterfaceName)) {
             Log.e(TAG, "Could not stop DHCP");
@@ -2570,19 +2574,11 @@ public class WifiStateTracker extends NetworkStateTracker {
                     }
 
                     if (msg.what == EVENT_DHCP_START) {
-                        Log.d(TAG, "DHCP request started");
-                        if (NetworkUtils.runDhcp(mInterfaceName, mDhcpInfo)) {
+                        if (runDhcp(false)) {
                             event = EVENT_INTERFACE_CONFIGURATION_SUCCEEDED;
                             Log.d(TAG, "DHCP succeeded with lease: " + mDhcpInfo.leaseDuration);
-                            //Do it a bit earlier than half the lease duration time
-                            //to beat the native DHCP client and avoid extra packets
-                            //48% for one hour lease time = 29 minutes
-                            mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                                    SystemClock.elapsedRealtime() +
-                                    mDhcpInfo.leaseDuration * 480, //in milliseconds
-                                    mDhcpRenewalIntent);
-
-                        } else {
+                            setDhcpRenewalAlarm(mDhcpInfo.leaseDuration);
+                       } else {
                             event = EVENT_INTERFACE_CONFIGURATION_FAILED;
                             Log.e(TAG, "DHCP request failed: " + NetworkUtils.getDhcpError());
                         }
@@ -2600,9 +2596,7 @@ public class WifiStateTracker extends NetworkStateTracker {
                         int oDns1 = mDhcpInfo.dns1;
                         int oDns2 = mDhcpInfo.dns2;
 
-                        if (NetworkUtils.runDhcpRenew(mInterfaceName, mDhcpInfo)) {
-                            Log.d(TAG, "DHCP renewal with lease: " + mDhcpInfo.leaseDuration);
-
+                        if (runDhcp(true)) {
                             boolean changed =
                                 (oIp   != mDhcpInfo.ipAddress ||
                                  oGw   != mDhcpInfo.gateway ||
@@ -2619,10 +2613,7 @@ public class WifiStateTracker extends NetworkStateTracker {
                                 msg.sendToTarget();
                             }
 
-                            mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                                    SystemClock.elapsedRealtime() +
-                                    mDhcpInfo.leaseDuration * 480,
-                                    mDhcpRenewalIntent);
+                            setDhcpRenewalAlarm(mDhcpInfo.leaseDuration);
                         } else {
                             event = EVENT_INTERFACE_CONFIGURATION_FAILED;
                             Log.d(TAG, "DHCP renewal failed: " + NetworkUtils.getDhcpError());
@@ -2647,6 +2638,35 @@ public class WifiStateTracker extends NetworkStateTracker {
 
                     break;
             }
+        }
+
+        private boolean runDhcp(boolean renew) {
+            final String action = renew ? "DHCP request" : "DHCP renewal";
+
+            Log.d(TAG, action + " started");
+
+            boolean result = renew ? NetworkUtils.runDhcpRenew(mInterfaceName, mDhcpInfo) :
+                                     NetworkUtils.runDhcp(mInterfaceName, mDhcpInfo);
+
+            if (!result) {
+                Log.e(TAG, action + " failed: " + NetworkUtils.getDhcpError());
+                return false;
+            }
+
+            Log.d(TAG, action + " succeeded with lease: " + mDhcpInfo.leaseDuration);
+            //Don't schedule renewal if we're on an infinite lease
+            if (mDhcpInfo.leaseDuration >= 0) {
+                //Do it a bit earlier than half the lease duration time
+                //to beat the native DHCP client and avoid extra packets
+                //48% for one hour lease time = 29 minutes
+                long nextRenewal = (long) mDhcpInfo.leaseDuration * 480; // in milliseconds;
+                nextRenewal += SystemClock.elapsedRealtime();
+
+                mAlarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                                  nextRenewal, mDhcpRenewalIntent);
+            }
+
+            return true;
         }
 
         public synchronized void setCancelCallback(boolean cancelCallback) {
