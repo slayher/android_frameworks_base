@@ -123,17 +123,6 @@ public class MobileDataStateTracker extends NetworkStateTracker {
         mMobileInfo= new HashMap<IPVersion, MobileInfo>();
         mMobileInfo.put(IPVersion.IPV4, new MobileInfo());
         mMobileInfo.put(IPVersion.IPV6, new MobileInfo());
-
-        String[] ifNames = SystemProperties.get(
-            "mobiledata.interfaces",
-            "rmnet0,eth0,gprs,ppp0"
-        ).split(",");
-
-        mDnsPropNames = new String[2 * ifNames.length];
-        for (int i = 0; i < ifNames.length; ++i) {
-            mDnsPropNames[2*i+0] = "net." + ifNames[i] + ".dns1";
-            mDnsPropNames[2*i+1] = "net." + ifNames[i] + ".dns2";
-        }
     }
 
     /**

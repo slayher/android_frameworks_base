@@ -52,7 +52,6 @@ public abstract class NetworkStateTracker extends Handler {
     protected Context mContext;
     protected Handler mTarget;
     protected String interfaceName;
-    protected String[] mDnsPropNames;
     private boolean mTeardownRequested;
 
     private int mCachedGatewayAddr = 0;
@@ -107,9 +106,7 @@ public abstract class NetworkStateTracker extends Handler {
      * network interface.
      * @return a list of DNS addresses, with no holes.
      */
-    public String[] getNameServers() {
-        return getNameServerList(mDnsPropNames);
-    }
+    abstract public String[] getNameServers();
 
     /*
      * Return the interface name that supports the specified IP Version.

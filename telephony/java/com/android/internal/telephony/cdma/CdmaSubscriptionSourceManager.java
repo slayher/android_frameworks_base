@@ -145,12 +145,10 @@ public class CdmaSubscriptionSourceManager extends Handler {
         switch (msg.what) {
             case EVENT_CDMA_SUBSCRIPTION_SOURCE_CHANGED: {
                 Log.d(LOG_TAG, "EVENT_CDMA_SUBSCRIPTION_SOURCE_CHANGED");
-                ar = (AsyncResult) msg.obj;
-                handleCdmaSubscriptionSource(ar);
+                mCM.getCdmaSubscriptionSource(obtainMessage(EVENT_GET_CDMA_SUBSCRIPTION_SOURCE));
             }
                 break;
             case EVENT_GET_CDMA_SUBSCRIPTION_SOURCE: {
-                Log.d(LOG_TAG, "EVENT_GET_CDMA_SUBSCRIPTION_SOURCE");
                 ar = (AsyncResult) msg.obj;
                 handleCdmaSubscriptionSource(ar);
             }

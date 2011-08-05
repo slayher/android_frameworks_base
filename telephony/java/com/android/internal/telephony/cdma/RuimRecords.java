@@ -192,7 +192,7 @@ public final class RuimRecords extends UiccApplicationRecords {
             break;
 
             /* IO events */
-             case EVENT_GET_CDMA_SUBSCRIPTION_DONE:
+            case EVENT_GET_CDMA_SUBSCRIPTION_DONE:
                 ar = (AsyncResult)msg.obj;
                 String localTemp[] = (String[])ar.result;
                 if (ar.exception != null) {
