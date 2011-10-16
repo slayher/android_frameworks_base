@@ -34,8 +34,8 @@ import android.widget.TextView;
 public class CmBatteryText extends TextView {
     private boolean mAttached;
 
-    private static final int BATTERY_STYLE_PERCENT   = 1;
-    private int mStatusBarCmBattery;
+    // weather to show this battery widget or not
+    private boolean mShowCmBattery;
 
     Handler mHandler;
 
@@ -129,14 +129,12 @@ public class CmBatteryText extends TextView {
     private void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
 
-        int statusBarCmBattery = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CM_BATTERY, 2));
-        mStatusBarCmBattery = Integer.valueOf(statusBarCmBattery);
+        mShowCmBattery = (Settings.System
+                .getInt(resolver, Settings.System.STATUS_BAR_CM_BATTERY, 0) == 1);
 
-        if (mStatusBarCmBattery == BATTERY_STYLE_PERCENT) {
+        if (mShowCmBattery)
             setVisibility(View.VISIBLE);
-        } else {
+        else
             setVisibility(View.GONE);
-        }
     }
 }
